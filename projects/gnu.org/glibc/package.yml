@@ -74,6 +74,11 @@ test:
   dependencies:
     gnu.org/gcc: '*'
   script: |
+    if test "{{hw.platform}}" != "linux"; then
+      echo "glibc is only supported on Linux"
+      exit 0
+    fi
+
     # Putting ourselves in the LD_LIBRARY_PATH breaks literally everything else...
     export LD_LIBRARY_PATH=$(echo LD_LIBRARY_PATH | tr ':' '\n' | grep -v {{prefix}} | tr '\n' ':')
     test "{{hw.platform}}" = "darwin" && exit 0
@@ -89,6 +94,7 @@ test:
       -nostdinc \
       -nostdlib \
       -Wl,--rpath="{{prefix}}/lib" \
+      -I{{deps.gnu.org/gcc.prefix}}/lib/gcc/$ARCH-unknown-linux-gnu/{{deps.gnu.org/gcc.version}}/include \
       -std=c11 \
       -o test \
       -v \
