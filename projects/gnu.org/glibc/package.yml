@@ -86,6 +86,8 @@ test:
         ;;
     esac
     gcc \
+      -nostdinc \
+      -nostdlib \
       -Wl,--rpath="{{prefix}}/lib" \
       -std=c11 \
       -o test \
