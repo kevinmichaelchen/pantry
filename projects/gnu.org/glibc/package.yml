@@ -7,10 +7,7 @@ versions:
   # - 2.28
   - 2.33
 
-runtime:
-  env:
-    PATH: ${{prefix}}/sbin:$PATH
-    CFLAGS: -Wl,--dynamic-linker={{prefix}}/lib/ld-{{ version.marketing }}.so
+platforms: linux
 
 build:
   dependencies:
@@ -20,17 +17,12 @@ build:
     gnu.org/gettext: '*'
     gnu.org/texinfo: '*'
     gnu.org/bison: '*'
+    gnu.org/sed: '*'
     perl.org: '*'
     python.org: ^3
+    kernel.org/linux-headers: '~5.15'
   working-directory: build
   script: |
-    if test "{{hw.platform}}" != "linux"; then
-      echo "glibc is only supported on Linux"
-      mkdir -p "{{prefix}}"
-      touch {{prefix}}/linux-only
-      exit 0
-    fi
-
     ../configure $ARGS
     make all #-j {{hw.concurrency}}
     make install
@@ -54,6 +46,7 @@ build:
       - xtrace
     ARGS:
       - --prefix={{ prefix }}
+      - --disable-crypt
       - --disable-debug
       - --disable-dependency-tracking
       - --disable-silent-rules
@@ -61,8 +54,8 @@ build:
       - --enable-obsolete-rpc
       - --without-gd
       - --without-selinux
-      - --enable-kernel=2.6.0
       - --with-binutils={{deps.gnu.org/binutils.prefix}}/bin
+      - --with-headers={{deps.kernel.org/linux-headers.prefix}}/include
       # ChatGPT
       - --disable-multi-arch
     CFLAGS: -O2
@@ -75,17 +68,11 @@ test:
   dependencies:
     gnu.org/gcc: '*'
   script: |
-    if test "{{hw.platform}}" != "linux"; then
-      echo "glibc is only supported on Linux"
-      exit 0
-    fi
-
     {{prefix}}/lib/ld-{{ version.marketing }}.so --version
     ld.so --version
 
     # Putting ourselves in the LD_LIBRARY_PATH breaks literally everything else...
     export LD_LIBRARY_PATH=$(echo LD_LIBRARY_PATH | tr ':' '\n' | grep -v {{prefix}} | tr '\n' ':')
-    test "{{hw.platform}}" = "darwin" && exit 0
     case "{{hw.arch}}" in
       x86-64) ARCH=x86_64;;
       aarch64) ARCH=aarch64;;
@@ -113,32 +100,30 @@ test:
       -static \
       -fPIC \
       -pie
-    ./test
     objdump -p test
+    ./test
 
 provides:
-  darwin: []
-  linux:
-    - bin/catchsegv
-    - bin/gencat
-    - bin/getconf
-    - bin/getent
-    - bin/iconv
-    - bin/ld.so
-    - bin/ldd
-    - bin/locale
-    - bin/localedef
-    - bin/makedb
-    - bin/mtrace
-    - bin/pcprofiledump
-    - bin/pldd
-    - bin/sotruss
-    - bin/sprof
-    - bin/tzselect
-    - bin/xtrace
-    - sbin/iconvconfig
-    - sbin/ldconfig
-    - sbin/nscd
-    - sbin/sln
-    - sbin/zdump
-    - sbin/zic
+  - bin/catchsegv
+  - bin/gencat
+  - bin/getconf
+  - bin/getent
+  - bin/iconv
+  - bin/ld.so
+  - bin/ldd
+  - bin/locale
+  - bin/localedef
+  - bin/makedb
+  - bin/mtrace
+  - bin/pcprofiledump
+  - bin/pldd
+  - bin/sotruss
+  - bin/sprof
+  - bin/tzselect
+  - bin/xtrace
+  - sbin/iconvconfig
+  - sbin/ldconfig
+  - sbin/nscd
+  - sbin/sln
+  - sbin/zdump
+  - sbin/zic
