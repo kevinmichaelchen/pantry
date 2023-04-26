@@ -23,14 +23,10 @@ build:
     kernel.org/linux-headers: '~5.15'
   working-directory: build
   script: |
-    ../configure $ARGS
+    ../configure $ARGS --with-nonshared-cflags="$CFLAGS"
     make all #-j {{hw.concurrency}}
-
-    cd ..
-    make test
-    cd build
-
-    make install
+    make check
+    make install DESTDIR={{prefix}}
 
     cd {{prefix}}/bin
     for s in $SCRIPTS; do
