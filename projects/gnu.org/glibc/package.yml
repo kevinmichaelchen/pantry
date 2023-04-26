@@ -25,7 +25,11 @@ build:
   script: |
     ../configure $ARGS
     make all #-j {{hw.concurrency}}
+
+    cd ..
     make test
+    cd build
+
     make install
 
     cd {{prefix}}/bin
